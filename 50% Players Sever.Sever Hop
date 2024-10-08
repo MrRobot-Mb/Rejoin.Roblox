@@ -1,0 +1,33 @@
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function ServerHop()
+    local PlaceId = game.PlaceId
+    local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+    
+    local targetServerId = nil
+    local targetPlayerCount = nil
+    
+    for _, server in ipairs(servers.data) do
+        local playerCount = server.playing
+        local maxPlayers = server.maxPlayers
+        if playerCount < maxPlayers and server.id ~= game.JobId then
+            local occupancy = playerCount / maxPlayers
+            if occupancy >= 0.45 and occupancy <= 0.55 then
+                targetServerId = server.id
+                targetPlayerCount = playerCount
+                break
+            end
+        end
+    end
+    
+    if targetServerId then
+        TeleportService:TeleportToPlaceInstance(PlaceId, targetServerId, LocalPlayer)
+    else
+        print("No suitable server found.")
+    end
+end
+
+ServerHop()
